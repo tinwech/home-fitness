@@ -1,3 +1,4 @@
+from flask import Flask, render_template, Response
 import numpy as np
 import cv2 as cv
 import time
@@ -6,6 +7,8 @@ import math
 f = cv.FileStorage('calibrate.xml', cv.FILE_STORAGE_READ)
 intrinsic = f.getNode('intrinsic').mat()
 distortion = f.getNode('distortion').mat()
+app = Flask(__name__)
+
 
 def pose_esitmation(frame):
 
@@ -25,30 +28,35 @@ def pose_esitmation(frame):
             tvec = tvec.flatten('F')
 
             # Draw a square around the markers
-            cv.aruco.drawDetectedMarkers(frame, corners) 
+            cv.aruco.drawDetectedMarkers(frame, corners)
 
             # Draw Axis
-            cv.aruco.drawAxis(frame, intrinsic, distortion, rvec, tvec, 5)  
+            cv.aruco.drawAxis(frame, intrinsic, distortion, rvec, tvec, 5)
 
             # Put text
             frame = cv.putText(frame, 'z: ' + str(tvec[2]), tuple(corners[i][0][0]), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
 
     return frame
 
-if __name__ == '__main__':
 
+def gen_frames():
     video = cv.VideoCapture(1)
     time.sleep(2.0)
 
     while True:
-        ret, frame = video.read() # frame (480, 640, 3)
+        ret, frame = video.read()  # frame (480, 640, 3)
 
         if not ret:
             break
-        
+
         output = pose_esitmation(frame)
 
         cv.imshow('output', output)
+
+        _, img = cv.imencode('.jpg', output)
+        img = img.tobytes()
+        yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + img + b'\r\n')
 
         key = cv.waitKey(1) & 0xFF
         if key == ord('q'):
@@ -56,3 +64,15 @@ if __name__ == '__main__':
 
     video.release()
     cv.destroyAllWindows()
+
+@app.route('/video_feed')
+def video_feed():
+    return Response(gen_frames(),
+                    mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+if __name__ == '__main__':
+    app.run('0.0.0.0')

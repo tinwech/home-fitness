@@ -10,6 +10,22 @@ distortion = f.getNode('distortion').mat()
 app = Flask(__name__)
 
 
+def pose_matching(demo, user):
+    if demo[0][0] is None:
+        return
+
+    demo = np.array(demo)
+    demo = demo[:, demo[0, :].argsort()]
+    user = np.array(user)
+    user = user[:, user[0, :].argsort()]
+    
+    # print(user)
+    # for i in range(len(ids)):
+    #     print(ids[i]) 
+    #     print(tvec[i])
+    #     print(rvec[i])
+    return
+
 def pose_esitmation(frame):
 
     gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
@@ -18,7 +34,10 @@ def pose_esitmation(frame):
     parameters = cv.aruco.DetectorParameters_create()
 
     corners, ids, rejected_img_points = cv.aruco.detectMarkers(gray, cv.aruco_dict, parameters=parameters)
+    ids = np.array(ids).flatten('F')
 
+    t = []
+    r = []
     # If markers are detected
     if len(corners) > 0:
         for i in range(0, len(ids)):
@@ -26,6 +45,8 @@ def pose_esitmation(frame):
             rvec, tvec, markerPoints = cv.aruco.estimatePoseSingleMarkers(corners[i], 7.4, intrinsic, distortion)
             rvec = rvec.flatten('F')
             tvec = tvec.flatten('F')
+            r.append(rvec)
+            t.append(tvec)
 
             # Draw a square around the markers
             cv.aruco.drawDetectedMarkers(frame, corners)
@@ -34,26 +55,41 @@ def pose_esitmation(frame):
             cv.aruco.drawAxis(frame, intrinsic, distortion, rvec, tvec, 5)
 
             # Put text
-            frame = cv.putText(frame, 'z: ' + str(tvec[2]), tuple(corners[i][0][0]), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
-
-    return frame
+            frame = cv.putText(frame, 'id: ' + str(ids[i]) + 'z: ' + str(int(tvec[2])), tuple(corners[i][0][0]), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 1)
+            
+    return frame, ids, t, r
 
 
 def gen_frames():
-    video = cv.VideoCapture(1)
+    demo = cv.VideoCapture('./demos/demo_1.avi')
+
+    user = cv.VideoCapture(1)
     time.sleep(2.0)
 
+    # while demo.isOpened():
     while True:
-        ret, frame = video.read()  # frame (480, 640, 3)
+        ret, frame_demo = demo.read()  # frame (480, 640, 3)
+
+        if not ret:
+            demo = cv.VideoCapture('./demos/demo_1.avi')
+            continue
+
+        ret, frame_user = user.read()
 
         if not ret:
             break
 
-        output = pose_esitmation(frame)
+        output_demo, ids, tvec, rvec = pose_esitmation(frame_demo)
+        demo_data = [ids, tvec, rvec]
+        output_user, ids, tvec, rvec = pose_esitmation(frame_user)
+        user_data = [ids, tvec, rvec]
 
-        cv.imshow('output', output)
+        pose_matching(demo_data, user_data)
 
-        _, img = cv.imencode('.jpg', output)
+        cv.imshow('output demo', output_demo)
+        cv.imshow('output user', output_user)
+
+        _, img = cv.imencode('.jpg', output_user)
         img = img.tobytes()
         yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + img + b'\r\n')
@@ -62,7 +98,7 @@ def gen_frames():
         if key == ord('q'):
             break
 
-    video.release()
+    demo.release()
     cv.destroyAllWindows()
 
 @app.route('/video_feed')

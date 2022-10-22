@@ -253,7 +253,7 @@ def gen_frames():
                     # show replay video
                     cv.imshow('replay', output)
 
-                    blank = np.zeros((720, 20, 3), np.uint8)
+                    blank = np.zeros((720, 90, 3), np.uint8)
                     blank.fill(255)
                     output = cv.hconcat([live_user, blank, output])
                     _, outbuf = cv.imencode('.jpg', output)
@@ -288,7 +288,7 @@ def gen_frames():
         # save user video for replay
         out.write(output_user)
 
-        blank = np.zeros((720, 50, 3), np.uint8)
+        blank = np.zeros((720, 90, 3), np.uint8)
         blank.fill(255)
         output = cv.hconcat([output_user, blank, output_demo])
         _, outbuf = cv.imencode('.jpg', output)
@@ -319,6 +319,8 @@ def index():
         print(request.args['email'])
         if request.form.get('action'):
             demo_path = request.form.get('action')
+            request.get
+            print('demo_path', demo_path)
             with open('option.txt', 'w') as f:
                 f.write(demo_path)
 

@@ -5,6 +5,7 @@ cap = cv2.VideoCapture(1)
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
 action = input()
 demo = False
+global out
 while cap.isOpened():
     ret, frame = cap.read()
     if not ret:

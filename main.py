@@ -120,11 +120,13 @@ def draw_marker_poses(frame, demo_ids, demo_marker_poses, user_ids, user_marker_
               [8, 12, 15],      # left foot 
               [7, 9, 10]]       # right foot 
 
-    # draw demo ground truth
+    # draw demo ground trut
+    path = [[], [], [], []]
     n = len(demo_marker_poses)
     for fid in range(len(demo_marker_poses)):
         ids = demo_ids[fid]
-        for id_group in groups:
+        for j in range(len(groups)):
+            id_group = groups[j]
             pos = [0, 0]
             cnt = 0
             for i in range(len(ids)):
@@ -133,13 +135,27 @@ def draw_marker_poses(frame, demo_ids, demo_marker_poses, user_ids, user_marker_
                     pos += demo_marker_poses[fid][i]
             if cnt == 0:
                 continue
-            frame = cv.circle(frame, (int(pos[0] / cnt), int(pos[1] / cnt)), radius=5, color=(0, 0, 255 * fid / n), thickness=-1)
+            # frame = cv.circle(frame, (int(pos[0] / cnt), int(pos[1] / cnt)), radius=5, color=(0, 255 * fid / n, 0), thickness=-1)
+            path[j].append((int(pos[0] / cnt), int(pos[1] / cnt)));
+
+    for group_id in range(len(groups)):
+        p = path[group_id]
+        if len(p) == 1:
+            continue
+        n = len(p)
+        for i in range(len(p) - 1):
+            p1 = p[i]
+            p2 = p[i + 1]
+            frame = cv.line(frame, p1, p2, (0, 255 * i / n, 0), thickness=5)
+            
 
     # draw user ground truth
+    path = [[], [], [], []]
     n = len(user_marker_poses)
     for fid in range(len(user_marker_poses)):
         ids = user_ids[fid]
-        for id_group in groups:
+        for j in range(len(groups)):
+            id_group = groups[j]
             pos = [0, 0]
             cnt = 0
             for i in range(len(ids)):
@@ -148,7 +164,18 @@ def draw_marker_poses(frame, demo_ids, demo_marker_poses, user_ids, user_marker_
                     pos += user_marker_poses[fid][i]
             if cnt == 0:
                 continue
-            frame = cv.circle(frame, (int(pos[0] / cnt), int(pos[1] / cnt)), radius=5, color=(255, 0, 0), thickness=-1)
+            # frame = cv.circle(frame, (int(pos[0] / cnt), int(pos[1] / cnt)), radius=5, color=(0, 255 * fid / n, 0), thickness=-1)
+            path[j].append((int(pos[0] / cnt), int(pos[1] / cnt)));
+
+    for group_id in range(len(groups)):
+        p = path[group_id]
+        if len(p) == 1:
+            continue
+        n = len(p)
+        for i in range(len(p) - 1):
+            p1 = p[i]
+            p2 = p[i + 1]
+            frame = cv.line(frame, p1, p2, (0, 0, 255 * i / n), thickness=5)
 
     return frame
 

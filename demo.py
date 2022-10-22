@@ -5,7 +5,8 @@ cap = cv2.VideoCapture(1)
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
 action = input()
 demo = False
-while cap.isOpene:
+global out
+while cap.isOpened():
     ret, frame = cap.read()
     if not ret:
         print("Can't receive frame (stream end?). Exiting ...")

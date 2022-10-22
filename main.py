@@ -1,5 +1,5 @@
 from distutils.log import error
-from flask import Flask, render_template, Response
+from flask import Flask, render_template, Response, request, redirect, url_for, jsonify
 import numpy as np
 import cv2 as cv
 import time
@@ -146,14 +146,52 @@ def gen_frames():
     demo.release()
     cv.destroyAllWindows()
 
+def demo_gen_frames(frames):
+    counter = 0
+    length = len(frames)
+    while counter < length:
+        frame = frames[counter]
+        counter += 1
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+        time.sleep(0.5)
+    global result
+    result = False
+
+@app.route('/is_decoded/')
+def is_decoded():
+    global result
+    return jsonify({'is_decoded': result})
+
+
 @app.route('/video_feed')
 def video_feed():
-    return Response(gen_frames(),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
+    global frames 
+    return Response(demo_gen_frames(frames), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-@app.route('/')
+@app.route('/demo_video_feed')
+def demo_video_feed():
+    global frames
+    return Response(demo_gen_frames(frames), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+frames_repo = {'1':['1', '2', '3', '4', '5'], 
+                '2':['6', '7', '8', '9', '0'],
+                '3':['3', '4', '5', '6', '7']}
+                    
+@app.route('/',methods=['POST','GET'])
 def index():
-    return render_template('index.html')
+    global frames
+    global result
+    res = ''
+    if request.form:
+        result = False
+        res = '1'
+        frames = [open('./static/images/' + f + '.jpg', 'rb').read() for f in frames_repo[request.form['action']]]
+    return render_template('index.html', result=True)
+
+# @app.route('/result',methods=['POST','GET'])
+# def result():
+#     return render_template('index.html', result="")
 
 if __name__ == '__main__':
     app.run('0.0.0.0')

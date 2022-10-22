@@ -1,13 +1,57 @@
+<style>
+    input {
+        border: 0;
+        background-color: #003C9D;
+        color: #fff;
+        border-radius: 10px;
+        cursor: pointer;
+    }
+</style>
 <!doctype html>
 <html lang="en">
 
 <head>
     <title>Flask</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 </head>
 
 <body>
-    <h3>Pictures Streaming</h3>
-    <img src="{{ url_for('video_feed') }}">
+    <!-- <form method="post" name="action">
+        <input type="submit" value="1">1</button>
+        <input type="submit" value="2">2</button>
+        <input type="submit" value="3">3</button>
+        <input type="submit" value="4">4</button>
+        <input type="submit" value="5">5</button>
+    </form> -->
+    <h1>Did you know your fitness action is right or not?</h1>
+
+    <form method="post">
+        <h2>Choose an action what you want to verify:&nbsp;
+            <input type="submit" name="action" value="1">
+            <input type="submit" name="action" value="2">
+            <input type="submit" name="action" value="3">
+        </h2>
+    </form>
+
+    <h3>Your video streaming&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Action demonstration</h3>
+    <p><img id=img src="{{ url_for('video_feed') }}"
+            width="400">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</p>
+    {% if result == False %}
+    <p><img src="{{ url_for('demo_video_feed') }}" width="400"></p>
+    {% else %}
+    <p>123456</p>
+    {% endif %}
+    <script>
+        var intervalId = window.setInterval(function () {
+            $.getJSON('/is_decoded/', function (data) {
+                if (data['is_decoded'] == true) {
+                    window.location.href("{{url_for('index', result = '1')}}")
+                    clearInterval(intervalId); // stop checking it
+                };
+            })
+        }, 500); // 500ms = 0.5s
+    </script>
+
 </body>
 
 </html>

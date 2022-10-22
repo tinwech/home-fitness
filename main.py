@@ -303,10 +303,13 @@ def video_feed():
     return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
+
+
 @app.route('/',methods=['POST','GET'])
 def index():
     global init_flg
     if request.method == 'POST' and init_flg == False:
+        print(request.args['email'])
         if request.form.get('action'):
             '''
             TODO

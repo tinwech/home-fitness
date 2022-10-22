@@ -13,6 +13,34 @@
         text-align: center;
     }
 
+    .title {
+        margin-left: 15%;
+        margin-right: 15%;
+        text-align: center;
+        display: flex;
+        flex-direction: row;
+        justify-items: center;
+        color: aliceblue;
+    }
+
+    .t1 {
+        flex: 5;
+        background-color: blue;
+    }
+
+    .t2 {
+        flex: 5;
+        background-color: blue;
+    }
+
+    .t3 {
+        flex: 0.3;
+    }
+
+    header {
+        padding-top: 20px;
+        padding-bottom: 10px;
+    }
 
     h1 h2 p {
         border: 0;
@@ -27,31 +55,38 @@
 
 <head>
     <title>Flask</title>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script> -->
 </head>
 
 <body>
-    <h1>Do you know your fitness action is right or not?</h1>
+    <header>
+        <h2>原相科技 x Smart Home Fitness Coach</h2>
+        <h5>Do you know your fitness action is right or not?</h5>
+        <form method="post">
 
-    <form method="post">
-        <h2>Choose an action what you want to verify:&nbsp;
-            <input type="submit" name="action" value="1">
-            <input type="submit" name="action" value="2">
-            <input type="submit" name="action" value="3">
-        </h2>
-    </form>
+            <h4>Choose an action which you want to verify:&nbsp;
+                <input type="submit" name="action" value="1">
+                <input type="submit" name="action" value="2">
+                <input type="submit" name="action" value="3">
+            </h4>
+        </form>
+    </header>
 
-    <h3>Your video streaming&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Action demonstration</h3>
-    {% if status == "demo"%}
-    <form method="post">
-        <input type="submit" name="replay" value="Replay">
-    </form>
-    {% endif %}
+
+
+    <div class="title">
+        <div class="t1">
+            <h3>Your video streaming</h3>
+        </div>
+        <div class="t3"></div>
+        <div class="t2">
+            <h3>Action demonstration</h3>
+        </div>
+
+
+    </div>
     <p><img id=img src="{{ url_for('video_feed') }}"
             width="350">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-        {% if status == "init"%}
-        The expert demonstration will be displayed here
-        {% endif %}
     </p>
 
 </body>

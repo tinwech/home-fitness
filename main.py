@@ -10,7 +10,6 @@ distortion = f.getNode('distortion').mat()
 app = Flask(__name__)
 t_errors = []
 r_errors = []
-
 video_path = ""
 with open('option.txt') as f:
     lines = f.readlines()
@@ -311,10 +310,13 @@ def video_feed():
     return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
+
+
 @app.route('/',methods=['POST','GET'])
 def index():
     global init_flg
     if request.method == 'POST' and init_flg == False:
+        print(request.args['email'])
         if request.form.get('action'):
             demo_path = request.form.get('action')
             with open('option.txt', 'w') as f:

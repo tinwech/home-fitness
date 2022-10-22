@@ -10,7 +10,6 @@ distortion = f.getNode('distortion').mat()
 app = Flask(__name__)
 t_errors = []
 r_errors = []
-
 video_path = ""
 with open('option.txt') as f:
     lines = f.readlines()

@@ -1,4 +1,3 @@
-from tokenize import group
 from flask import Flask, render_template, Response
 import numpy as np
 import cv2 as cv
@@ -117,8 +116,8 @@ def pose_esitmation(frame):
 def draw_marker_poses(frame, demo_ids, demo_marker_poses, user_ids, user_marker_poses):
     groups = [[3, 4, 11, 13],   # left hand
               [2, 6, 1, 0],     # right hand 
-              [8, 12, 15],      # left foot 
-              [7, 9, 10]]       # right foot 
+              [8, 12, 14, 15],  # left foot 
+              [5, 7, 9, 10]]    # right foot 
 
     # draw demo ground trut
     path = [[], [], [], []]

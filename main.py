@@ -1,5 +1,4 @@
-from tokenize import blank_re
-from flask import Flask, render_template, Response
+from flask import Flask, render_template, Response, request
 import numpy as np
 import cv2 as cv
 import time
@@ -301,12 +300,32 @@ def gen_frames():
 
 @app.route('/video_feed')
 def video_feed():
-    return Response(gen_frames(),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-@app.route('/')
+
+@app.route('/',methods=['POST','GET'])
 def index():
-    return render_template('index.html')
+    global init_flg
+    if request.method == 'POST' and init_flg == False:
+        if request.form.get('action'):
+            '''
+            TODO
+            choosing action signal
+            reuquest.form['action'] = '1', '2', '3',...
+            '''
+            return render_template('index.html', status="demo")
+
+        elif request.form.get('replay'):
+            '''
+            TODO
+            replay signal
+            '''
+            return render_template('index.html', status="replay")
+    else:
+        init_flg = False
+    return render_template('index.html', status="init")
 
 if __name__ == '__main__':
+    global init
+    init_flg = True
     app.run('0.0.0.0')

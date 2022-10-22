@@ -1,13 +1,59 @@
+<style>
+    input {
+        border: 0;
+        background-color: #003C9D;
+        color: #fff;
+        border-radius: 10px;
+        cursor: pointer;
+        text-align: center;
+
+    }
+
+    body {
+        text-align: center;
+    }
+
+
+    h1 h2 p {
+        border: 0;
+        color: rgb(36, 18, 116);
+        border-radius: 10px;
+        text-align: center;
+
+    }
+</style>
 <!doctype html>
 <html lang="en">
 
 <head>
     <title>Flask</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 </head>
 
 <body>
-    <h3>Pictures Streaming</h3>
-    <img src="{{ url_for('video_feed') }}">
+    <h1>Do you know your fitness action is right or not?</h1>
+
+    <form method="post">
+        <h2>Choose an action what you want to verify:&nbsp;
+            <input type="submit" name="action" value="1">
+            <input type="submit" name="action" value="2">
+            <input type="submit" name="action" value="3">
+        </h2>
+    </form>
+
+    <h3>Your video streaming&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Action demonstration</h3>
+    {% if status == "demo"%}
+    <form method="post">
+        <input type="submit" name="replay" value="Replay">
+    </form>
+    {% endif %}
+    <p><img id=img src="{{ url_for('video_feed') }}"
+            width="350">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        {% if status == "init"%}
+        The expert demonstration will be displayed here
+        {% endif %}
+    </p>
+
 </body>
 
 </html>

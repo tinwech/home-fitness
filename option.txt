@@ -1,1 +1,1 @@
-demos/demo.avi
+demos/bird_demo.mp4

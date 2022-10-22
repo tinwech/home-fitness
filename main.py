@@ -79,7 +79,7 @@ def pose_matching(demo, user):
         e = np.linalg.norm(user_rvec) - np.linalg.norm(target_rvec)
         r_error += e
 
-    print(f'translation error: {t_error}, rotation error: {r_error}')
+    # print(f'translation error: {t_error}, rotation error: {r_error}')
     t_errors.append(t_error)
     r_errors.append(r_error)
 
@@ -184,16 +184,16 @@ def draw_marker_poses(frame, demo_ids, demo_marker_poses, user_ids, user_marker_
 def evaluation():
     alpha = 0.1
     error = alpha * np.sum(t_errors) + (1 - alpha) * np.sum(r_errors)
-    print(f'error: {error}')
+    # print(f'error: {error}')
     threshold = 100
 
 def gen_frames():
     demo = cv.VideoCapture(video_path)
-    user = cv.VideoCapture(1)
+    user = cv.VideoCapture(0)
     time.sleep(2.0)
 
     fourcc = cv.VideoWriter_fourcc(*'XVID')
-    out = cv.VideoWriter(f'./users/user.avi', fourcc, 20.0, (640,  480))
+    out = cv.VideoWriter(f'./users/user.avi', fourcc, 20.0, (1280,  720))
 
     while True:
         ret, frame_user = user.read()
@@ -202,17 +202,18 @@ def gen_frames():
         if not ret:
             break
 
-        ret, frame_demo = demo.read()  # frame (480, 640, 3)
+        ret, frame_demo = demo.read()  # frame (720, 1280, 3)
 
         # demo video ended
         if not ret:
             # determine action correct or not. If not, save replay frames
             out.release()
+            time.sleep(1)
 
             evaluation()
 
             # do replay ----------------------------------------------------
-            while True:
+            if True:
                 replay = cv.VideoCapture('./users/user.avi')
                 demo = cv.VideoCapture(video_path)
 
@@ -221,20 +222,24 @@ def gen_frames():
                 demo_ids = [] # (frame_num, marker_num, id)
                 user_ids = []
                 while True:
-                    ret, frame_user = replay.read()  # frame (480, 640, 3)
+                    ret, frame_user = replay.read()  # frame (720, 1280, 3)
                     # replay video ended
                     if not ret:
+                        print('replay user failed')
                         break
 
-                    ret, frame_demo = demo.read()  # frame (480, 640, 3)
+                    ret, frame_demo = demo.read()  # frame (720, 1280, 3)
 
                     # replay video ended
                     if not ret:
+                        print('replay demo failed')
                         break
+
                     ret, live_user = user.read()
 
                     # replay video ended
                     if not ret:
+                        print('replay live failed')
                         break
 
                     _, ids, _, _, poses = pose_esitmation(frame_demo)
@@ -249,7 +254,7 @@ def gen_frames():
                     # show replay video
                     cv.imshow('replay', output)
 
-                    blank = np.zeros((480, 20, 3), np.uint8)
+                    blank = np.zeros((720, 20, 3), np.uint8)
                     blank.fill(255)
                     output = cv.hconcat([live_user, blank, output])
                     _, outbuf = cv.imencode('.jpg', output)
@@ -257,7 +262,6 @@ def gen_frames():
                     yield (b'--frame\r\n'
                                b'Content-Type: image/jpeg\r\n\r\n' + outbuf + b'\r\n')
 
-                    time.sleep(1 / 90)
                     key = cv.waitKey(1) & 0xFF
                     if key == ord('q'):
                         break
@@ -267,7 +271,7 @@ def gen_frames():
             # do replay ----------------------------------------------------
 
             # reset
-            out = cv.VideoWriter(f'./users/user.avi', fourcc, 20.0, (640,  480))
+            out = cv.VideoWriter(f'./users/user.avi', fourcc, 20.0, (1280,  720))
             t_errors.clear()
             r_errors.clear()
             demo = cv.VideoCapture(video_path)
@@ -281,12 +285,11 @@ def gen_frames():
 
         cv.imshow('demo', output_demo)
         cv.imshow('user', output_user)
-        time.sleep(1 / 90)
 
         # save user video for replay
         out.write(output_user)
 
-        blank = np.zeros((480, 20, 3), np.uint8)
+        blank = np.zeros((720, 50, 3), np.uint8)
         blank.fill(255)
         output = cv.hconcat([output_user, blank, output_demo])
         _, outbuf = cv.imencode('.jpg', output)

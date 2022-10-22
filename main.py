@@ -11,6 +11,11 @@ app = Flask(__name__)
 t_errors = []
 r_errors = []
 
+video_path = ""
+with open('option.txt') as f:
+    lines = f.readlines()
+    video_path = lines[0]
+
 def unit_vector(vector):
     return vector / np.linalg.norm(vector)
 
@@ -183,7 +188,7 @@ def evaluation():
     threshold = 100
 
 def gen_frames():
-    demo = cv.VideoCapture('./demos/demo.avi')
+    demo = cv.VideoCapture(video_path)
     user = cv.VideoCapture(1)
     time.sleep(2.0)
 
@@ -205,11 +210,11 @@ def gen_frames():
             out.release()
 
             evaluation()
-            replay = True
+
             # do replay ----------------------------------------------------
-            if replay:
+            while True:
                 replay = cv.VideoCapture('./users/user.avi')
-                demo = cv.VideoCapture('./demos/demo.avi')
+                demo = cv.VideoCapture(video_path)
 
                 demo_marker_poses = [] # (frame_num, marker_num, (x, y))
                 user_marker_poses = []
@@ -265,7 +270,7 @@ def gen_frames():
             out = cv.VideoWriter(f'./users/user.avi', fourcc, 20.0, (640,  480))
             t_errors.clear()
             r_errors.clear()
-            demo = cv.VideoCapture('./demos/demo.avi')
+            demo = cv.VideoCapture(video_path)
             continue
 
         output_demo, ids, tvec, rvec, _ = pose_esitmation(frame_demo)
@@ -308,19 +313,12 @@ def index():
     global init_flg
     if request.method == 'POST' and init_flg == False:
         if request.form.get('action'):
-            '''
-            TODO
-            choosing action signal
-            reuquest.form['action'] = '1', '2', '3',...
-            '''
+            demo_path = request.form.get('action')
+            with open('option.txt', 'w') as f:
+                f.write(demo_path)
+
             return render_template('index.html', status="demo")
 
-        elif request.form.get('replay'):
-            '''
-            TODO
-            replay signal
-            '''
-            return render_template('index.html', status="replay")
     else:
         init_flg = False
     return render_template('index.html', status="init")

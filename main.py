@@ -1,3 +1,4 @@
+from tokenize import blank_re
 from flask import Flask, render_template, Response
 import numpy as np
 import cv2 as cv
@@ -176,49 +177,11 @@ def draw_marker_poses(frame, demo_ids, demo_marker_poses, user_ids, user_marker_
 
     return frame
 
-def replay_video():
-    replay = cv.VideoCapture('./users/user.avi')
-    demo = cv.VideoCapture('./demos/demo.avi')
-
-    demo_marker_poses = [] # (frame_num, marker_num, (x, y))
-    user_marker_poses = []
-    demo_ids = [] # (frame_num, marker_num, id)
-    user_ids = []
-    while True:
-        ret, frame_user = replay.read()  # frame (480, 640, 3)
-        ret, frame_demo = demo.read()  # frame (480, 640, 3)
-
-        # replay video ended
-        if not ret:
-            break
-
-        _, ids, _, _, poses = pose_esitmation(frame_demo)
-        demo_marker_poses.append(poses)
-        demo_ids.append(ids)
-        _, ids, _, _, poses = pose_esitmation(frame_user)
-        user_marker_poses.append(poses)
-        user_ids.append(ids)
-
-        output = draw_marker_poses(frame_user, demo_ids, demo_marker_poses, user_ids, user_marker_poses)
-        
-        # show replay video
-        cv.imshow('replay', output)
-
-        key = cv.waitKey(1) & 0xFF
-
-        time.sleep(1 / 90)
-        if key == ord('q'):
-            break
-
-    replay.release()
-    cv.destroyWindow('replay')
-
 def evaluation():
     alpha = 0.1
     error = alpha * np.sum(t_errors) + (1 - alpha) * np.sum(r_errors)
     print(f'error: {error}')
     threshold = 100
-    return error > threshold
 
 def gen_frames():
     demo = cv.VideoCapture('./demos/demo.avi')
@@ -229,6 +192,12 @@ def gen_frames():
     out = cv.VideoWriter(f'./users/user.avi', fourcc, 20.0, (640,  480))
 
     while True:
+        ret, frame_user = user.read()
+        
+        # can't read from camera
+        if not ret:
+            break
+
         ret, frame_demo = demo.read()  # frame (480, 640, 3)
 
         # demo video ended
@@ -236,23 +205,69 @@ def gen_frames():
             # determine action correct or not. If not, save replay frames
             out.release()
 
-            replay = evaluation()
+            evaluation()
+            replay = True
+            # do replay ----------------------------------------------------
             if replay:
-                replay_video()
+                replay = cv.VideoCapture('./users/user.avi')
+                demo = cv.VideoCapture('./demos/demo.avi')
 
-            out = cv.VideoWriter(f'./users/user.avi', fourcc, 20.0, (640,  480))
+                demo_marker_poses = [] # (frame_num, marker_num, (x, y))
+                user_marker_poses = []
+                demo_ids = [] # (frame_num, marker_num, id)
+                user_ids = []
+                while True:
+                    ret, frame_user = replay.read()  # frame (480, 640, 3)
+                    # replay video ended
+                    if not ret:
+                        break
+
+                    ret, frame_demo = demo.read()  # frame (480, 640, 3)
+
+                    # replay video ended
+                    if not ret:
+                        break
+                    ret, live_user = user.read()
+
+                    # replay video ended
+                    if not ret:
+                        break
+
+                    _, ids, _, _, poses = pose_esitmation(frame_demo)
+                    demo_marker_poses.append(poses)
+                    demo_ids.append(ids)
+                    _, ids, _, _, poses = pose_esitmation(frame_user)
+                    user_marker_poses.append(poses)
+                    user_ids.append(ids)
+
+                    output = draw_marker_poses(frame_user, demo_ids, demo_marker_poses, user_ids, user_marker_poses)
+
+                    # show replay video
+                    cv.imshow('replay', output)
+
+                    blank = np.zeros((480, 20, 3), np.uint8)
+                    blank.fill(255)
+                    output = cv.hconcat([live_user, blank, output])
+                    _, outbuf = cv.imencode('.jpg', output)
+                    outbuf = outbuf.tobytes()
+                    yield (b'--frame\r\n'
+                               b'Content-Type: image/jpeg\r\n\r\n' + outbuf + b'\r\n')
+
+                    time.sleep(1 / 90)
+                    key = cv.waitKey(1) & 0xFF
+                    if key == ord('q'):
+                        break
+
+                replay.release()
+                cv.destroyWindow('replay')
+            # do replay ----------------------------------------------------
 
             # reset
+            out = cv.VideoWriter(f'./users/user.avi', fourcc, 20.0, (640,  480))
             t_errors.clear()
             r_errors.clear()
             demo = cv.VideoCapture('./demos/demo.avi')
             continue
-
-        ret, frame_user = user.read()
-        
-        # can't read from camera
-        if not ret:
-            break
 
         output_demo, ids, tvec, rvec, _ = pose_esitmation(frame_demo)
         demo_data = [ids, tvec, rvec]
@@ -267,10 +282,13 @@ def gen_frames():
         # save user video for replay
         out.write(output_user)
 
-        _, img = cv.imencode('.jpg', output_user)
-        img = img.tobytes()
+        blank = np.zeros((480, 20, 3), np.uint8)
+        blank.fill(255)
+        output = cv.hconcat([output_user, blank, output_demo])
+        _, outbuf = cv.imencode('.jpg', output)
+        outbuf = outbuf.tobytes()
         yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + img + b'\r\n')
+                   b'Content-Type: image/jpeg\r\n\r\n' + outbuf + b'\r\n')
 
         key = cv.waitKey(1) & 0xFF
         if key == ord('q'):

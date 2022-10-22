@@ -1,9 +1,8 @@
-from distutils.log import error
 from flask import Flask, render_template, Response
 import numpy as np
 import cv2 as cv
 import time
-import math
+import sys
 
 f = cv.FileStorage('calibrate.xml', cv.FILE_STORAGE_READ)
 intrinsic = f.getNode('intrinsic').mat()
@@ -102,25 +101,67 @@ def pose_esitmation(frame):
             
     return frame, ids, t, r
 
+def replay():
+    replay = cv.VideoCapture('./users/user.avi')
+
+    while True:
+        ret, frame = replay.read()  # frame (480, 640, 3)
+
+        # replay video ended
+        if not ret:
+            break
+
+        # show replay video
+        cv.imshow('replay', frame)
+
+        key = cv.waitKey(1) & 0xFF
+
+        time.sleep(1 / 60)
+        if key == ord('q'):
+            break
+
+    replay.release()
+    cv.destroyWindow('replay')
+
+def evaluation():
+    alpha = 0.1
+    error = alpha * np.sum(t_errors) + (1 - alpha) * np.sum(r_errors)
+    print(f'error: {error}')
+
+    # threshold = 500
+    # if error > threshold:
+    #     replay()
+    replay()
+
+    return
 
 def gen_frames():
-    demo = cv.VideoCapture('./demos/demo_1.avi')
-
+    demo = cv.VideoCapture('./demos/demo.avi')
     user = cv.VideoCapture(1)
     time.sleep(2.0)
 
-    # while demo.isOpened():
+    fourcc = cv.VideoWriter_fourcc(*'XVID')
+    out = cv.VideoWriter(f'./users/user.avi', fourcc, 20.0, (640,  480))
+
     while True:
         ret, frame_demo = demo.read()  # frame (480, 640, 3)
 
         # demo video ended
         if not ret:
+            # determine action correct or not. If not, save replay frames
+            out.release()
+            evaluation()
+            out = cv.VideoWriter(f'./users/user.avi', fourcc, 20.0, (640,  480))
+
+            # reset
+            t_errors.clear()
+            r_errors.clear()
             demo = cv.VideoCapture('./demos/demo.avi')
-            # evaluation()
             continue
 
         ret, frame_user = user.read()
-
+        
+        # can't read from camera
         if not ret:
             break
 
@@ -128,11 +169,13 @@ def gen_frames():
         demo_data = [ids, tvec, rvec]
         output_user, ids, tvec, rvec = pose_esitmation(frame_user)
         user_data = [ids, tvec, rvec]
-
         pose_matching(demo_data, user_data)
 
-        cv.imshow('output demo', output_demo)
-        cv.imshow('output user', output_user)
+        cv.imshow('demo', output_demo)
+        cv.imshow('user', output_user)
+
+        # save user video for replay
+        out.write(output_user)
 
         _, img = cv.imencode('.jpg', output_user)
         img = img.tobytes()
@@ -144,6 +187,8 @@ def gen_frames():
             break
 
     demo.release()
+    user.release()
+    out.release()
     cv.destroyAllWindows()
 
 @app.route('/video_feed')

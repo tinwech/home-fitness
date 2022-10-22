@@ -10,9 +10,7 @@ while cap.isOpened():
     if not ret:
         print("Can't receive frame (stream end?). Exiting ...")
         break
-    # 水平上下翻轉影像
-    #frame = cv2.flip(frame, 0)
-    # write the flipped frame
+
     if demo:
         out.write(frame)
 

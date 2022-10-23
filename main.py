@@ -2,7 +2,6 @@ from flask import Flask, render_template, Response, request
 import numpy as np
 import cv2 as cv
 import time
-import sys
 
 f = cv.FileStorage('calibrate.xml', cv.FILE_STORAGE_READ)
 intrinsic = f.getNode('intrinsic').mat()
@@ -10,6 +9,7 @@ distortion = f.getNode('distortion').mat()
 app = Flask(__name__)
 t_errors = []
 r_errors = []
+
 video_path = ""
 with open('option.txt') as f:
     lines = f.readlines()
@@ -40,6 +40,8 @@ def pose_matching(demo, user):
 
     # no markers detected in demo video
     if demo[0][0] is None:
+        t_errors.append(50)
+        r_errors.append(3)
         return
 
     # no markers detected in user video
@@ -78,7 +80,7 @@ def pose_matching(demo, user):
         e = np.linalg.norm(user_rvec) - np.linalg.norm(target_rvec)
         r_error += e
 
-    # print(f'translation error: {t_error}, rotation error: {r_error}')
+    print(f'translation error: {t_error}, rotation error: {r_error}')
     t_errors.append(t_error)
     r_errors.append(r_error)
 
@@ -106,7 +108,7 @@ def pose_esitmation(frame):
             t.append(tvec)
 
             # Draw a square around the markers
-            cv.aruco.drawDetectedMarkers(frame, corners)
+            # cv.aruco.drawDetectedMarkers(frame, corners)
 
             # Draw Axis
             # cv.aruco.drawAxis(frame, intrinsic, distortion, rvec, tvec, 5)
@@ -183,8 +185,14 @@ def draw_marker_poses(frame, demo_ids, demo_marker_poses, user_ids, user_marker_
 def evaluation():
     alpha = 0.1
     error = alpha * np.sum(t_errors) + (1 - alpha) * np.sum(r_errors)
-    # print(f'error: {error}')
+    print(f'error: {error}')
+
     threshold = 100
+
+    if error > threshold:
+        print('Your action is wrong!!')
+    else:
+        print('Your action is correct!!')
 
 def gen_frames():
     demo = cv.VideoCapture(video_path)

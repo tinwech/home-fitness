@@ -25,12 +25,12 @@
 
     .t1 {
         flex: 5;
-        background-color: blue;
+        background-color: rgb(110, 132, 200);
     }
 
     .t2 {
         flex: 5;
-        background-color: blue;
+        background-color: rgb(110, 132, 200);
     }
 
     .t3 {
@@ -47,15 +47,15 @@
         color: rgb(36, 18, 116);
         border-radius: 10px;
         text-align: center;
-
     }
+
 </style>
+
 <!doctype html>
 <html lang="en">
 
 <head>
-    <title>Flask</title>
-    <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script> -->
+    <title>Home Fitness Coach</title>
 </head>
 
 <body>
@@ -63,11 +63,10 @@
         <h2>原相科技 x Smart Home Fitness Coach</h2>
         <h5>Do you know your fitness action is right or not?</h5>
         <form method="post">
-
             <h4>Choose an action which you want to verify:&nbsp;
-                <input type="submit" name="action" value="1">
-                <input type="submit" name="action" value="2">
-                <input type="submit" name="action" value="3">
+                <input type="submit" name="action" value="bird">
+                <input type="submit" name="action" value="leg">
+                <input type="submit" name="action" value="squat">
             </h4>
         </form>
     </header>
@@ -82,11 +81,15 @@
         <div class="t2">
             <h3>Action demonstration</h3>
         </div>
-
-
     </div>
-    <p><img id=img src="{{ url_for('video_feed') }}"
-            width="350">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+    <p>
+        <!-- <img id=img src="{{ url_for('video_feed') }}" width="700">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -->
+        <img src="{{ url_for('video_feed') }}" width="850" alt="streaming" class="center">
+    </p>
+
+    <p>
+        <h5>Green line is the demonstration trajectory.</h5>
     </p>
 
 </body>

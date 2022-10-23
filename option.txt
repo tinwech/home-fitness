@@ -1,1 +1,1 @@
-demos/bird_demo.mp4
+demos/squat_demo.mp4

@@ -12,7 +12,7 @@ objp = objp * square_size
 # Arrays to store object points and image points from all the images.
 objpoints = [] # 3d point in real world space
 imgpoints = [] # 2d points in image plane.
-cap = cv.VideoCapture(1)
+cap = cv.VideoCapture(0)
 cnt = 0
 while True:
     ret, img = cap.read()

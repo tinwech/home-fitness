@@ -9,11 +9,7 @@ distortion = f.getNode('distortion').mat()
 app = Flask(__name__)
 t_errors = []
 r_errors = []
-
 video_path = ""
-with open('option.txt') as f:
-    lines = f.readlines()
-    video_path = lines[0]
 
 def unit_vector(vector):
     return vector / np.linalg.norm(vector)
@@ -119,38 +115,54 @@ def pose_esitmation(frame):
     center_poses = np.array(get_center_pos(corners))
     return frame, ids, t, r, center_poses
 
+def draw(frame, n, start, end):
+    for pid in range(start, end + 1):
+        pixel = np.load(f'path/path{pid}.npy')
+        for i in range(len(pixel)):
+            if i >= n:
+                break
+            p = pixel[i]
+            frame = cv.circle(frame, (p[0], p[1]), 5, (0, 255 * i / n, 0), -1)
+
+    return frame
+
 def draw_marker_poses(frame, demo_ids, demo_marker_poses, user_ids, user_marker_poses):
     groups = [[3, 4, 11, 13],   # left hand
-              [2, 6, 1, 0],     # right hand 
-              [8, 12, 14, 15],  # left foot 
-              [5, 7, 9, 10]]    # right foot 
+            [2, 6, 1, 0],     # right hand 
+            [8, 12, 14, 15],  # left foot 
+            [5, 7, 9, 10]]    # right foot 
 
-    # draw demo ground trut
-    path = [[], [], [], []]
-    n = len(demo_marker_poses)
-    for fid in range(len(demo_marker_poses)):
-        ids = demo_ids[fid]
-        for j in range(len(groups)):
-            id_group = groups[j]
-            pos = [0, 0]
-            cnt = 0
-            for i in range(len(ids)):
-                if ids[i] in id_group:
-                    cnt += 1
-                    pos += demo_marker_poses[fid][i]
-            if cnt == 0:
+    if video_path == 'demos/bird_demo.mp4':
+        frame = draw(frame, len(demo_ids), 1, 4)
+    elif video_path == 'demos/leg_demo.mp4':
+        frame = draw(frame, len(demo_ids), 5, 8)
+    else:
+        # draw demo ground trut
+        path = [[], [], [], []]
+        n = len(demo_marker_poses)
+        for fid in range(len(demo_marker_poses)):
+            ids = demo_ids[fid]
+            for j in range(len(groups)):
+                id_group = groups[j]
+                pos = [0, 0]
+                cnt = 0
+                for i in range(len(ids)):
+                    if ids[i] in id_group:
+                        cnt += 1
+                        pos += demo_marker_poses[fid][i]
+                if cnt == 0:
+                    continue
+                path[j].append((int(pos[0] / cnt), int(pos[1] / cnt)));
+
+        for group_id in range(len(groups)):
+            p = path[group_id]
+            if len(p) == 1:
                 continue
-            path[j].append((int(pos[0] / cnt), int(pos[1] / cnt)));
-
-    for group_id in range(len(groups)):
-        p = path[group_id]
-        if len(p) == 1:
-            continue
-        n = len(p)
-        for i in range(len(p) - 1):
-            p1 = p[i]
-            p2 = p[i + 1]
-            frame = cv.line(frame, p1, p2, (0, 255 * i / n, 0), thickness=5)
+            n = len(p)
+            for i in range(len(p) - 1):
+                p1 = p[i]
+                p2 = p[i + 1]
+                frame = cv.line(frame, p1, p2, (0, 255 * i / n, 0), thickness=5)
             
 
     # draw user ground truth
@@ -195,6 +207,13 @@ def evaluation():
         print('Your action is correct!!')
 
 def gen_frames():
+    global video_path
+    video_path = ""
+    with open('option.txt') as f:
+        lines = f.readlines()
+        video_path = lines[0]
+
+    print(video_path)
     demo = cv.VideoCapture(video_path)
     user = cv.VideoCapture(0)
     time.sleep(2.0)
@@ -209,6 +228,8 @@ def gen_frames():
         if not ret:
             break
 
+        frame_user = cv.flip(frame_user, 1)
+
         ret, frame_demo = demo.read()  # frame (720, 1280, 3)
 
         # demo video ended
@@ -220,7 +241,7 @@ def gen_frames():
             evaluation()
 
             # do replay ----------------------------------------------------
-            if True:
+            while True:
                 replay = cv.VideoCapture('./users/user.avi')
                 demo = cv.VideoCapture(video_path)
 
@@ -324,10 +345,9 @@ def video_feed():
 def index():
     global init_flg
     if request.method == 'POST' and init_flg == False:
-        print(request.args['email'])
         if request.form.get('action'):
             demo_path = request.form.get('action')
-            request.get
+            demo_path = f'demos/{demo_path}_demo.mp4'
             print('demo_path', demo_path)
             with open('option.txt', 'w') as f:
                 f.write(demo_path)
